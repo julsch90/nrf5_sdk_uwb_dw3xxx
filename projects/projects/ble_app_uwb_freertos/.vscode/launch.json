@@ -1,0 +1,69 @@
+{
+
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "nRF52840 Debug (PCA10056)",
+        "cwd": "${workspaceFolder}",
+        "executable": "${workspaceFolder}/pca10056/s140/armgcc/_build/nrf52840_xxaa.out",
+        "request": "launch",
+        "type": "cortex-debug",
+        "servertype": "jlink",
+        "device": "nRF52840_xxAA",
+        "interface": "swd",
+        "svdFile": "${workspaceFolder}/../../../nRF5_SDK_17.1.0_ddde560/modules/nrfx/mdk/nrf52840.svd",
+        "armToolchainPath": "C:/GNU Arm Embedded Toolchain/arm-gnu-toolchain-11.3.rel1-mingw-w64-i686-arm-none-eabi/bin/",
+        "runToEntryPoint": "main",
+        "rtos": "FreeRTOS",
+        // "preRestartCommands": [
+        //   "file ./pca10056/s140/armgcc/_build/nrf52840_xxaa.out",
+        //   "load",
+        //   "add-symbol-file ./pca10056/s140/armgcc/_build/nrf52840_xxaa.out 0x08000000",
+        //   "enable breakpoint",
+        //   "monitor reset"
+        // ]
+      },
+      {
+        "name": "nRF52833 Debug (DWM3001CDK)",
+        "cwd": "${workspaceFolder}",
+        "executable": "${workspaceFolder}/dwm3001cdk/s140/armgcc/_build/nrf52833_xxaa.out",
+        "request": "launch",
+        "type": "cortex-debug",
+        "servertype": "jlink",
+        "device": "nRF52833_xxAA",
+        "interface": "swd",
+        "svdFile": "${workspaceFolder}/../../../nRF5_SDK_17.1.0_ddde560/modules/nrfx/mdk/nrf52833.svd",
+        "armToolchainPath": "C:/GNU Arm Embedded Toolchain/arm-gnu-toolchain-11.3.rel1-mingw-w64-i686-arm-none-eabi/bin/",
+        "runToEntryPoint": "main",
+        "rtos": "FreeRTOS",
+        // "preRestartCommands": [
+        //   "file ./dwm3001cdk/s140/armgcc/_build/nrf52833_xxaa.out",
+        //   "load",
+        //   "add-symbol-file ./dwm3001cdk/s140/armgcc/_build/nrf52833_xxaa.out 0x08000000",
+        //   "enable breakpoint",
+        //   "monitor reset"
+        // ]
+      },
+      {
+        "name": "nRF52832 Debug (PCA10040)",
+        "cwd": "${workspaceFolder}",
+        "executable": "${workspaceFolder}/pca10040/s132/armgcc/_build/nrf52832_xxaa.out",
+        "request": "launch",
+        "type": "cortex-debug",
+        "servertype": "jlink",
+        "device": "nRF52832_xxAA",
+        "interface": "swd",
+        "svdFile": "${workspaceFolder}/../../../nRF5_SDK_17.1.0_ddde560/modules/nrfx/mdk/nrf52832.svd",
+        "armToolchainPath": "C:/GNU Arm Embedded Toolchain/arm-gnu-toolchain-11.3.rel1-mingw-w64-i686-arm-none-eabi/bin/",
+        "runToEntryPoint": "main",
+        "rtos": "FreeRTOS",
+        // "preRestartCommands": [
+        //   "file ./pca10040/s132/armgcc/_build/nrf52832_xxaa.out",
+        //   "load",
+        //   "add-symbol-file ./pca10040/s132/armgcc/_build/nrf52832_xxaa.out 0x08000000",
+        //   "enable breakpoint",
+        //   "monitor reset"
+        // ]
+      }
+    ]
+}

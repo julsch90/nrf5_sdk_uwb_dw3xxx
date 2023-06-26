@@ -1,0 +1,4 @@
+r
+loadfile _build\bootloader_settings.hex
+r
+q

@@ -1,0 +1,25 @@
+{
+    "files.associations": {
+        "*.md": "markdown",
+        "stdint.h": "c",
+        "app_util.h": "c",
+        "type2ab_evb.h": "c",
+        "boards.h": "c",
+        "pca10056.h": "c",
+        "freertos.h": "c",
+        "nrf_sdh_freertos.h": "c",
+        "peer_manager_handler.h": "c",
+        "task.h": "c",
+        "timers.h": "c",
+        "ble_conn_state.h": "c",
+        "uwb.h": "c",
+        "nrf_ble_gatt.h": "c",
+        "main.h": "c",
+        "nrfx_spim.h": "c",
+        "d52_starterkit.h": "c",
+        "arduino_primo.h": "c",
+        "type2ab.h": "c",
+        "deca_port.h": "c",
+        "app_util_platform.h": "c"
+    }
+}

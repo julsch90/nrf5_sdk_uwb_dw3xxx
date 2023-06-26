@@ -1,0 +1,59 @@
+{
+    "env": {
+        "nrfSDK": "${workspaceFolder}/../../../nRF5_SDK_17.1.0_ddde560",
+        "projectDIR": "${workspaceFolder}/../../../projects"
+    },
+    "configurations": [
+        {
+            "name": "ARMGCC",
+            "includePath": [
+                "${nrfSDK}/**",
+                "${workspaceFolder}/**",
+                "${projectDIR}/**"
+            ],
+            "defines": [
+                "DEBUG",
+                "ICM42688P",
+                "UNICODE",
+                "_UNICODE",
+                "BOARD_CUSTOM",
+                "BOARD_PCA10056",
+                "__BOARD_DWM3001C_H__",
+                "BSP_DEFINES_ONLY",
+                "CONFIG_GPIO_AS_PINRESET",
+                "FLOAT_ABI_HARD",
+                "FREERTOS",
+                // "NRF52832_XXAA",
+                "NRF52833_XXAA",
+                // "NRF52840_XXAA",
+                "DCONFIG_NFCT_PINS_AS_GPIOS",
+                "CONFIG_GPIO_AS_PINRESET",
+                "INITIALIZE_USER_SECTIONS",
+                "FLOAT_ABI_HARD",
+                "NRF52",
+                "NRF52_PAN_74",
+                // "S132",
+                "S140",
+                "SOFTDEVICE_PRESENT",
+                "USE_APP_CONFIG",
+                "SWI_DISABLE0"
+            ],
+            // "compilerPath": "C:/Program Files (x86)/GNU Arm Embedded Toolchain/9 2020-q2-update/bin/arm-none-eabi-gcc.exe",
+            "compilerPath": "C:/GNU Arm Embedded Toolchain/arm-gnu-toolchain-11.3.rel1-mingw-w64-i686-arm-none-eabi/bin/arm-none-eabi-gcc.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "clang-x64",
+            "configurationProvider": "nrf-connect",
+            "browse": {
+                "path": [
+                    "${workspaceFolder}",
+                    "${projectDIR}/components",
+                    "${projectDIR}"
+                ],
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": ""
+              }
+        }
+    ],
+    "version": 4
+}

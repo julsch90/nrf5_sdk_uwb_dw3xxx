@@ -1,0 +1,202 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build dwm3001cdk",
+            "type": "shell",
+            "command": "make -j16",
+            "options": {
+                "cwd": "${workspaceFolder}/dwm3001cdk/s140/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "clean dwm3001cdk",
+            "type": "shell",
+            "command": "make clean",
+            "options": {
+                "cwd": "${workspaceFolder}/dwm3001cdk/s140/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+
+        },
+        {
+            "label": "flash dwm3001cdk",
+            "type": "shell",
+            "command": "make flash -j16",
+            "options": {
+                "cwd": "${workspaceFolder}/dwm3001cdk/s140/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "flash_softdevice dwm3001cdk",
+            "type": "shell",
+            "command": "make flash_softdevice",
+            "options": {
+                "cwd": "${workspaceFolder}/dwm3001cdk/s140/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "flash_bootloader_settings dwm3001cdk",
+            "type": "shell",
+            "command": "make flash_bootloader_settings",
+            "options": {
+                "cwd": "${workspaceFolder}/dwm3001cdk/s140/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "sdk_config dwm3001cdk",
+            "type": "shell",
+            "command": "make sdk_config",
+            "options": {
+                "cwd": "${workspaceFolder}/dwm3001cdk/s140/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "erase dwm3001cdk",
+            "type": "shell",
+            "command": "make erase",
+            "options": {
+                "cwd": "${workspaceFolder}/dwm3001cdk/s140/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "build pca10040",
+            "type": "shell",
+            "command": "make -j16",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10040/s132/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "clean pca10040",
+            "type": "shell",
+            "command": "make clean",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10040/s132/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+
+        },
+        {
+            "label": "flash pca10040",
+            "type": "shell",
+            "command": "make flash -j16",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10040/s132/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "flash_softdevice pca10040",
+            "type": "shell",
+            "command": "make flash_softdevice",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10040/s132/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "sdk_config pca10040",
+            "type": "shell",
+            "command": "make sdk_config",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10040/s132/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "erase pca10040",
+            "type": "shell",
+            "command": "make erase",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10040/s132/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+
+
+        {
+            "label": "build pca10056",
+            "type": "shell",
+            "command": "make -j16",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10056/s140/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "clean pca10056",
+            "type": "shell",
+            "command": "make clean",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10056/s140/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+
+        },
+        {
+            "label": "flash pca10056",
+            "type": "shell",
+            "command": "make flash -j16",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10056/s140/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "flash_softdevice pca10056",
+            "type": "shell",
+            "command": "make flash_softdevice",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10056/s140/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "sdk_config pca10056",
+            "type": "shell",
+            "command": "make sdk_config",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10056/s140/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "erase pca10056",
+            "type": "shell",
+            "command": "make erase",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10056/s140/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        }
+    ]
+}

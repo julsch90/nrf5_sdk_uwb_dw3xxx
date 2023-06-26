@@ -1,0 +1,129 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build pca10056",
+            "type": "shell",
+            "command": "make -j16",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10056/blank/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "clean pca10056",
+            "type": "shell",
+            "command": "make clean",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10056/blank/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+
+        },
+        {
+            "label": "flash pca10056",
+            "type": "shell",
+            "command": "make -j16 flash",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10056/blank/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "flash_softdevice pca10056",
+            "type": "shell",
+            "command": "make flash_softdevice",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10056/blank/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "sdk_config pca10056",
+            "type": "shell",
+            "command": "make sdk_config",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10056/blank/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "erase pca10056",
+            "type": "shell",
+            "command": "make erase",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10056/blank/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "build type2ab_evb",
+            "type": "shell",
+            "command": "make -j16",
+            "options": {
+                "cwd": "${workspaceFolder}/type2ab_evb/blank/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "clean type2ab_evb",
+            "type": "shell",
+            "command": "make clean",
+            "options": {
+                "cwd": "${workspaceFolder}/type2ab_evb/blank/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+
+        },
+        {
+            "label": "flash type2ab_evb",
+            "type": "shell",
+            "command": "make flash",
+            "options": {
+                "cwd": "${workspaceFolder}/type2ab_evb/blank/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "flash_softdevice type2ab_evb",
+            "type": "shell",
+            "command": "make flash_softdevice",
+            "options": {
+                "cwd": "${workspaceFolder}/type2ab_evb/blank/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "sdk_config type2ab_evb",
+            "type": "shell",
+            "command": "make sdk_config",
+            "options": {
+                "cwd": "${workspaceFolder}/type2ab_evb/blank/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "erase type2ab_evb",
+            "type": "shell",
+            "command": "make erase",
+            "options": {
+                "cwd": "${workspaceFolder}/type2ab_evb/blank/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        }
+    ]
+}

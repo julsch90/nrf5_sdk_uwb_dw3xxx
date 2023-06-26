@@ -1,0 +1,193 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build pca10100_s140_ble",
+            "type": "shell",
+            "command": "make -j16",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10100_s140_ble/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "clean pca10100_s140_ble",
+            "type": "shell",
+            "command": "make clean",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10100_s140_ble/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "flash pca10100_s140_ble",
+            "type": "shell",
+            "command": "make flash -j16",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10100_s140_ble/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "flash_softdevice pca10100_s140_ble",
+            "type": "shell",
+            "command": "make flash_softdevice",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10100_s140_ble/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "sdk_config pca10100_s140_ble",
+            "type": "shell",
+            "command": "make sdk_config",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10100_s140_ble/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "erase pca10100_s140_ble",
+            "type": "shell",
+            "command": "make erase",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10100_s140_ble/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+
+
+        {
+            "label": "build pca10100_s140_ble_debug",
+            "type": "shell",
+            "command": "make -j16",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10100_s140_ble_debug/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "clean pca10100_s140_ble_debug",
+            "type": "shell",
+            "command": "make clean",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10100_s140_ble_debug/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+
+        },
+        {
+            "label": "flash pca10100_s140_ble_debug",
+            "type": "shell",
+            "command": "make flash -j16",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10100_s140_ble_debug/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "flash_softdevice pca10100_s140_ble_debug",
+            "type": "shell",
+            "command": "make flash_softdevice",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10100_s140_ble_debug/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "sdk_config pca10100_s140_ble_debug",
+            "type": "shell",
+            "command": "make sdk_config",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10100_s140_ble_debug/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "erase pca10100_s140_ble_debug",
+            "type": "shell",
+            "command": "make erase",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10100_s140_ble_debug/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+
+
+        {
+            "label": "build pca10056_usb",
+            "type": "shell",
+            "command": "make -j16",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10056_usb/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "clean pca10056_usb",
+            "type": "shell",
+            "command": "make clean",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10056_usb/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+
+        },
+        {
+            "label": "flash pca10056_usb",
+            "type": "shell",
+            "command": "make flash -j16",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10056_usb/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "flash_softdevice pca10056_usb",
+            "type": "shell",
+            "command": "make flash_softdevice",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10056_usb/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "sdk_config pca10056_usb",
+            "type": "shell",
+            "command": "make sdk_config",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10056_usb/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "erase pca10056_usb",
+            "type": "shell",
+            "command": "make erase",
+            "options": {
+                "cwd": "${workspaceFolder}/pca10056_usb/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        }
+    ]
+}

@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "*.md": "markdown",
+        "stdint.h": "c",
+        "app_util.h": "c",
+        "type2ab_evb.h": "c",
+        "boards.h": "c",
+        "pca10056.h": "c",
+        "nrf_sdh_ble.h": "c",
+        "nrf_log_ctrl.h": "c"
+    }
+}
