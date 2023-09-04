@@ -344,7 +344,7 @@ usb_task(void *arg) {
     {
         /* waiting for event */
         // UNUSED_RETURN_VALUE(ulTaskNotifyTake(pdTRUE, portMAX_DELAY));
-        UNUSED_RETURN_VALUE(ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(200)));
+        UNUSED_RETURN_VALUE(ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(10)));
 
         usb_process();
     }

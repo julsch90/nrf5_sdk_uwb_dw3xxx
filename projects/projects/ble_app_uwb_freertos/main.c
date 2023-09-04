@@ -35,6 +35,7 @@
 #define DEAD_BEEF   0xDEADBEEF              /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
 
 extern void app_main();
+extern void app_cir_main();
 
 /**@brief Callback function for asserts in the SoftDevice.
  *
@@ -76,7 +77,9 @@ main_task( void * pvParameters ) {
     for( ;; ) {
 
 
-        app_main();
+        // app_main();
+
+        app_cir_main();
 
     }
 

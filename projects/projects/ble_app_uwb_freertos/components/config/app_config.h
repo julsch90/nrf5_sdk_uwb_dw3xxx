@@ -16,7 +16,7 @@
 // <2=> Warning
 // <3=> Info
 // <4=> Debug
-#define NRF_LOG_DEFAULT_LEVEL 3
+#define NRF_LOG_DEFAULT_LEVEL 4
 
 #define NRF_FPRINTF_FLAG_AUTOMATIC_CR_ON_LF_ENABLED 1
 
@@ -52,8 +52,6 @@
 #define SEGGER_RTT_CONFIG_BUFFER_SIZE_DOWN 128
 
 #define PWM_AUDIO_CONFIG_USE_SCHEDULER 1
-
-
 
 // #define SAADC_ENABLED 0
 

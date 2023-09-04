@@ -6,7 +6,9 @@
 	],
 	"settings": {
 		"files.associations": {
-			"nrf_log.h": "c"
+			"nrf_log.h": "c",
+			"deca_probe_interface.h": "c",
+			"deca_device_api.h": "c"
 		}
 	}
 }

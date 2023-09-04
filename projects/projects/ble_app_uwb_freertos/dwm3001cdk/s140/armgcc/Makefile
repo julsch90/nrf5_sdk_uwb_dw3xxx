@@ -96,6 +96,7 @@ SRC_FILES += \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_usbd.c \
   $(PROJ_DIR)/main.c \
   $(PROJ_DIR)/app_main.c \
+  $(PROJ_DIR)/app_cir_main.c \
   $(PROJ_DIR)/components/log/log_m.c \
   $(PROJ_DIR)/components/clock/clock_m.c \
   $(PROJ_DIR)/components/wdt/wdt_m.c \

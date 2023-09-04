@@ -44,11 +44,11 @@
 
 #else
 
-#if defined(UWB_CIR) // increase spi buffer needed for a complete cir register read
+// #if defined(UWB_CIR) // increase spi buffer needed for a complete cir register read
 #define DATALEN1 (7*1024)
-#else
-#define DATALEN1 2048
-#endif
+// #else
+// #define DATALEN1 2048
+// #endif
 
 #endif
 
