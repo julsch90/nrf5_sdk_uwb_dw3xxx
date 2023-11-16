@@ -3,6 +3,27 @@
     "version": "0.2.0",
     "configurations": [
       {
+        "name": "nRF52840 Debug (TYPE2AB_EVB)",
+        "cwd": "${workspaceFolder}",
+        "executable": "${workspaceFolder}/type2ab_evb/s140/armgcc/_build/nrf52840_xxaa.out",
+        "request": "launch",
+        "type": "cortex-debug",
+        "servertype": "jlink",
+        "device": "nRF52840_xxAA",
+        "interface": "swd",
+        "svdFile": "${workspaceFolder}/../../../nRF5_SDK_17.1.0_ddde560/modules/nrfx/mdk/nrf52840.svd",
+        "armToolchainPath": "C:/GNU Arm Embedded Toolchain/arm-gnu-toolchain-11.3.rel1-mingw-w64-i686-arm-none-eabi/bin/",
+        "runToEntryPoint": "main",
+        "rtos": "FreeRTOS",
+        // "preRestartCommands": [
+        //   "file ./type2ab_evb/s140/armgcc/_build/nrf52840_xxaa.out",
+        //   "load",
+        //   "add-symbol-file ./type2ab_evb/s140/armgcc/_build/nrf52840_xxaa.out 0x08000000",
+        //   "enable breakpoint",
+        //   "monitor reset"
+        // ]
+      },
+      {
         "name": "nRF52840 Debug (PCA10056)",
         "cwd": "${workspaceFolder}",
         "executable": "${workspaceFolder}/pca10056/s140/armgcc/_build/nrf52840_xxaa.out",

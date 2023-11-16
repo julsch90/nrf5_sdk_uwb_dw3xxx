@@ -197,6 +197,68 @@
             },
             "problemMatcher": [],
             "group": "build"
+        },
+
+        {
+            "label": "build type2ab_evb",
+            "type": "shell",
+            "command": "make -j16",
+            "options": {
+                "cwd": "${workspaceFolder}/type2ab_evb/s140/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "clean type2ab_evb",
+            "type": "shell",
+            "command": "make clean",
+            "options": {
+                "cwd": "${workspaceFolder}/type2ab_evb/s140/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+
+        },
+        {
+            "label": "flash type2ab_evb",
+            "type": "shell",
+            "command": "make flash -j16",
+            "options": {
+                "cwd": "${workspaceFolder}/type2ab_evb/s140/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "flash_softdevice type2ab_evb",
+            "type": "shell",
+            "command": "make flash_softdevice",
+            "options": {
+                "cwd": "${workspaceFolder}/type2ab_evb/s140/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "sdk_config type2ab_evb",
+            "type": "shell",
+            "command": "make sdk_config",
+            "options": {
+                "cwd": "${workspaceFolder}/type2ab_evb/s140/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "erase type2ab_evb",
+            "type": "shell",
+            "command": "make erase",
+            "options": {
+                "cwd": "${workspaceFolder}/type2ab_evb/s140/armgcc"
+            },
+            "problemMatcher": [],
+            "group": "build"
         }
     ]
 }
