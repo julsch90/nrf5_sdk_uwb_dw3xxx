@@ -38,7 +38,7 @@
 static uint8_t  cir_buffer[CIR_BUFFER_LEN];
 static int      print_buffer_len;
 static char     print_buffer[4096];
-static void     cir_read_and_write_to_usb(uint16_t dst_addr, uint16_t src_addr, uint32_t idx, uint32_t timestamp_ms);
+static int      cir_read_and_write_to_usb(uint16_t dst_addr, uint16_t src_addr, uint32_t idx, uint32_t timestamp_ms);
 /* cir end */
 
 #define USE_ISR_ENABLED                 0
@@ -106,9 +106,10 @@ static dwt_txconfig_t txconfig_option_ch9 = {
 
 
 __attribute__((unused))
-static void
+static int
 cir_read_and_write_to_usb(uint16_t dst_addr, uint16_t src_addr, uint32_t idx, uint32_t timestamp_ms) {
 
+    int ret;
     uint32_t dgc_decision; // DGC_DECISION 0-7
     dwt_rxdiag_t rx_diag;
     float rssi;
@@ -192,13 +193,13 @@ cir_read_and_write_to_usb(uint16_t dst_addr, uint16_t src_addr, uint32_t idx, ui
 
 #if USB_M_ENABLED
     taskYIELD();
-    usb_m_write((uint8_t*)print_buffer, print_buffer_len);
+    ret = usb_m_write((uint8_t*)print_buffer, print_buffer_len);
     taskYIELD();
 #endif
 
     // uint32_t t2 = DWT->CYCCNT;
     // NRF_LOG_INFO("t_diff: %i us (%i ns)", (t2-t1)>>6, ((t2-t1)*1000)>>6);
-
+    return ret;
 }
 
 
@@ -360,6 +361,8 @@ __attribute__((unused))
 static void
 receive_frame() {
 
+    int ret = -1;
+    int ret_usb = -1;
     uint8_t rx_buffer[FRAME_LEN_MAX];
     uint32_t status_reg;
     uint16_t frame_len;
@@ -402,7 +405,8 @@ receive_frame() {
 
             if ( (p_mhr->dst_addr == DEVICE_SHORT_ADDR_RX) && (p_mhr->src_addr == DEVICE_SHORT_ADDR_TX))
             {
-                cir_read_and_write_to_usb(p_mhr->src_addr, p_mhr->dst_addr, p_payload->idx, p_payload->timestamp_ms);
+                ret = 0;
+                ret_usb = cir_read_and_write_to_usb(p_mhr->src_addr, p_mhr->dst_addr, p_payload->idx, p_payload->timestamp_ms);
             }
             else
             {
@@ -489,6 +493,18 @@ receive_frame() {
     //     event_cnt.STSE   // 8-bit STS error/warning events
     // );
     // NRF_LOG_INFO("\n\n%s", print_buffer );
+
+    if (!ret) {
+        bsp_board_led_invert(BSP_BOARD_LED_1);
+
+        if (!ret_usb) {
+            bsp_board_led_invert(BSP_BOARD_LED_0);
+        } else {
+            bsp_board_led_off(BSP_BOARD_LED_0);
+        }
+    } else {
+        bsp_board_leds_off();
+    }
 
 }
 
