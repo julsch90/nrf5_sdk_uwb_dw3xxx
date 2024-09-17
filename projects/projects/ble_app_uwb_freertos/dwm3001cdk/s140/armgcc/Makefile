@@ -99,6 +99,7 @@ SRC_FILES += \
   $(PROJ_DIR)/app_cir_main.c \
   $(PROJ_DIR)/components/log/log_m.c \
   $(PROJ_DIR)/components/clock/clock_m.c \
+  $(PROJ_DIR)/components/rtc/rtc_m.c \
   $(PROJ_DIR)/components/wdt/wdt_m.c \
   $(PROJ_DIR)/components/bsp/bsp_m.c \
   $(PROJ_DIR)/components/buttons/buttons_m.c \
@@ -162,6 +163,7 @@ INC_FOLDERS += \
   $(PROJ_DIR)/components/config \
   $(PROJ_DIR)/components/log \
   $(PROJ_DIR)/components/clock \
+  $(PROJ_DIR)/components/rtc \
   $(PROJ_DIR)/components/wdt \
   $(PROJ_DIR)/components/bsp \
   $(PROJ_DIR)/components/buttons \

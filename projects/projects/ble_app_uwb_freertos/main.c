@@ -21,6 +21,7 @@
 /* components / modules */
 #include "log_m.h"
 #include "clock_m.h"
+#include "rtc_m.h"
 #include "bsp_m.h"
 #include "ble_m.h"
 #include "wdt_m.h"
@@ -35,7 +36,6 @@
 #define DEAD_BEEF   0xDEADBEEF              /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
 
 extern void app_main();
-extern void app_cir_main();
 
 /**@brief Callback function for asserts in the SoftDevice.
  *
@@ -76,11 +76,7 @@ main_task( void * pvParameters ) {
 
     for( ;; ) {
 
-
-        // app_main();
-
-        app_cir_main();
-
+        app_main();
     }
 
     vTaskDelete( NULL );
@@ -121,6 +117,8 @@ main(void) {
 
     /* app scheduler init */
     APP_SCHED_INIT(SCHED_MAX_EVENT_DATA_SIZE, SCHED_QUEUE_SIZE);
+
+    rtc_m_init();
 
     /* initialize ble */
     // ble_m_init();

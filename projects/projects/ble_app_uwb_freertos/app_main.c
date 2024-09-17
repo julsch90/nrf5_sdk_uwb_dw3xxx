@@ -1,5 +1,8 @@
 
 #include "string.h"
+#include "stdlib.h"
+
+#include "main.h"
 
 /* nrf */
 #include "nrf_log.h"
@@ -12,6 +15,7 @@
 
 /* modules */
 #include "usb_m.h"
+#include "rtc_m.h"
 
 /* uwb */
 #include <deca_probe_interface.h>
@@ -22,18 +26,36 @@
 #include <deca_shared_functions.h>
 #include "deca_config_options.h"
 
+/* choose rx, tx or disturb device for build */
+#define TX_DEVICE_ENABLED           0
+#define RX_DEVICE_ENABLED           1
+#define DISTURB_DEVICE_ENABLED      0
+
+#if ((TX_DEVICE_ENABLED + RX_DEVICE_ENABLED + DISTURB_DEVICE_ENABLED) != 1)
+#error "choose only one"
+#endif
+
+
+#define DEVICE_PAN_ID                   0xBEEF
+#define DEVICE_SHORT_ADDR_TX            0x0001
+#define DEVICE_SHORT_ADDR_TX_DISTURB    0x0003
+#define DEVICE_SHORT_ADDR_RX            0x0002
+
+
+#define TX_DELAY_MS                     20      /* Inter-frame delay period, in milliseconds. */
+#define RX_TIMEOUT_UUS                  50000   /* Receive response timeout, expressed in UWB microseconds (UUS, 1 uus = 512/499.2 us) */
+
+#define MAGIC_ID                        0x01
+#define MAGIC_NUMBER                    0x12345678
+#define MAGIC_NUMBER_DISTURB            0x87654321
+
 #define USE_ISR_ENABLED                 0
-#define USE_FRAME_FILTERING_ENABLED     0   /* necessary for using auto acknowledge */
+#define USE_FRAME_FILTERING_ENABLED     0       /* necessary for using auto acknowledge */
 
-#define DEVICE_PAN_ID                   ( 0xBEEF )
-#define DEVICE_SHORT_ADDR_TX            ( 0x0001 )
-#define DEVICE_SHORT_ADDR_TX_DISTURB    ( 0x0003 )
-#define DEVICE_SHORT_ADDR_RX            ( 0x0002 )
-
-#define MAGIC_ID                        ( 0x01 )
-#define MAGIC_NUMBER                    ( 0x12345678 )
-#define MAGIC_NUMBER_DISTURB            ( 0x87654321 )
-
+/* cir */
+#define CIR_LEN                         300
+#define CIR_FP_IDX_OFFSET               700                         // [600:end] here is the fp inside the cir
+#define CIR_BUFFER_LEN                  ( CIR_LEN * (3+3) + 1 )     // 3 byte real + 3 byte imag and 1 byte garbadge (first byte)
 
 typedef struct __attribute__((__packed__)) {
     uint8_t frame_ctrl[2];
@@ -46,7 +68,31 @@ typedef struct __attribute__((__packed__)) {
 typedef struct __attribute__((__packed__)) {
     uint8_t id;
     uint32_t magic;
+    uint32_t idx;
+    uint32_t tx_timestamp_ms;
 } frame_magic_data_t;
+
+typedef struct __attribute__((__packed__)) {
+    uint32_t rx_timestamp_ms;
+    uint16_t frame_len;
+    // uint32_t status_reg;
+    uint8_t frame_buffer[FRAME_LEN_MAX];
+    dwt_deviceentcnts_t event_cnt;          // 24 bytes
+    dwt_rxdiag_t rxdiag;                    // 112 bytes
+    uint16_t cir_start_idx;
+    uint16_t cir_len;
+    uint8_t cir_buffer[CIR_BUFFER_LEN];
+} diag_frame_t;
+
+typedef struct __attribute__((__packed__)) {
+    uint32_t header;
+    uint16_t data_length;
+    uint8_t data[sizeof(diag_frame_t)];
+    uint32_t checksum;
+} data_packet_t;
+
+static data_packet_t data_packet;
+static diag_frame_t *p_diag_frame = (diag_frame_t*)(data_packet.data);
 
 /* Channel 5, PRF 64M, Preamble Length 128, PAC 8, Preamble code 9, Data Rate 6.8M, No STS
  */
@@ -84,15 +130,13 @@ dwt_txconfig_t txconfig_option_ch9 = {
 };
 
 
-int  uwb_init();
-// void rx_ok_cb(const dwt_cb_data_t *cb_data);
-// void rx_to_cb(const dwt_cb_data_t *cb_data);
-// void rx_err_cb(const dwt_cb_data_t *cb_data);
-// void tx_done_cb(const dwt_cb_data_t *cb_data);
+static int  uwb_init();
+// static void rx_ok_cb(const dwt_cb_data_t *cb_data);
+// static void rx_to_cb(const dwt_cb_data_t *cb_data);
+// static void rx_err_cb(const dwt_cb_data_t *cb_data);
+// static void tx_done_cb(const dwt_cb_data_t *cb_data);
 
-
-
-int
+static int
 uwb_init() {
 
     /* Initialise the SPI for dw */
@@ -201,55 +245,132 @@ uwb_init() {
 }
 
 
-
-
-// void
+// static void
 // rx_ok_cb(const dwt_cb_data_t *cb_data) {
 
 // }
 
-// void
+// static void
 // rx_to_cb(const dwt_cb_data_t *cb_data) {
 
 // }
 
-// void
+// static void
 // rx_err_cb(const dwt_cb_data_t *cb_data) {
 
 // }
 
-// void
+// static void
 // tx_done_cb(const dwt_cb_data_t *cb_data) {
 
 // }
 
+__attribute__((unused))
+static int
+read_diag_cir_to_usb() {
 
-/* Inter-frame delay period, in milliseconds. */
-#define TX_DELAY_MS 0
+    int ret = -1;
+    uint16_t fp_int;
+    uint32_t dgc_decision;  // DGC_DECISION 0-7 [NOTE] not working if using pcode 42 (42==10 to disable dgc)
+    float rssi;
 
-/* Receive response timeout, expressed in UWB microseconds (UUS, 1 uus = 512/499.2 us) */
-#define RX_TIMEOUT_UUS 100000
+    (void)dgc_decision;
+    (void)fp_int; // NOT USED HERE
+    (void)rssi;
 
+    // // CALC PROCESS TIME
+    // CoreDebug->DEMCR |= 0x01000000; // enable DWT
+    // DWT->CYCCNT = 0;                // Reset cycle counter
+    // DWT->CTRL |= 0x1;               // enable cycle counter
+    // uint32_t t1 = DWT->CYCCNT;
 
-/* Hold copy of event counters so that it can be examined at a debug breakpoint. */
-static dwt_deviceentcnts_t event_cnt;
+    dwt_readeventcounters(&p_diag_frame->event_cnt);
 
-void
+    dwt_readdiagnostics(&p_diag_frame->rxdiag);
+
+    // /* first path idx [10.6 bits fixed point value] */
+    // fp_int = p_diag_frame->rxdiag.ipatovFpIndex >> 6;
+
+    p_diag_frame->cir_start_idx = CIR_FP_IDX_OFFSET;
+    p_diag_frame->cir_len = CIR_LEN;
+
+    /* read accumulator */
+    // dwt_readaccdata(p_diag_frame->cir_buffer, CIR_BUFFER_LEN, (fp_int + CIR_FP_IDX_OFFSET));
+    dwt_readaccdata(p_diag_frame->cir_buffer, CIR_BUFFER_LEN, CIR_FP_IDX_OFFSET);
+
+    p_diag_frame->rx_timestamp_ms = rtc_m_get_time_ms();
+
+    // /* read digital gain control */
+    // dgc_decision = dwt_get_dgcdecision();
+
+    // /* get rssi */
+    // rssi = dwt_calc_rssi(&rx_diag, dgc_decision);
+
+#if USB_M_ENABLED
+
+    // data_packet.header = 0xAAAAAAAA;
+    data_packet.data_length = sizeof(diag_frame_t);
+    // data_packet.checksum = 0xEEEEEEEE;
+
+    taskYIELD();
+    ret = usb_m_write((uint8_t*)&data_packet, sizeof(data_packet_t));
+    taskYIELD();
+
+#endif
+
+    // TEST OUTPUT
+    // int cir_buffer_idx = 1;
+    // for (int i=0; i<CIR_LEN; i++) {
+
+    //     int32_t iValue = p_diag_frame->cir_buffer[cir_buffer_idx++];
+    //     iValue |= ((int32_t)p_diag_frame->cir_buffer[cir_buffer_idx++]<<8);
+    //     iValue |= ((int32_t)(p_diag_frame->cir_buffer[cir_buffer_idx++] & 0x03)<<16);
+
+    //     int32_t qValue = p_diag_frame->cir_buffer[cir_buffer_idx++];
+    //     qValue |= ((int32_t)p_diag_frame->cir_buffer[cir_buffer_idx++]<<8);
+    //     qValue |= ((int32_t)(p_diag_frame->cir_buffer[cir_buffer_idx++] & 0x03)<<16);
+
+    //     if (iValue & 0x020000) {  // MSB of 18 bit value is 1
+    //         iValue |= 0xfffc0000;
+    //     }
+    //     if (qValue & 0x020000) {  // MSB of 18 bit value is 1
+    //         qValue |= 0xfffc0000;
+    //     }
+    //     NRF_LOG_INFO("%ld %ldj", iValue, qValue);
+    //     // NRF_LOG_INFO("%ld %ldj", iValue, qValue);
+    //     // NRF_LOG_INFO("%ld %ldj", iValue, qValue);
+    //     // NRF_LOG_INFO("%ld %ldj", iValue, qValue);
+    //     i = CIR_LEN;
+    // }
+
+    // uint32_t t2 = DWT->CYCCNT;
+    // NRF_LOG_INFO("t_diff: %i us", (t2-t1)>>6);
+
+    return ret;
+}
+
+__attribute__((unused))
+static void
 simple_rx() {
 
-    uint8_t rx_buffer[FRAME_LEN_MAX];
+    int ret = -1;
+    int ret_usb = -1;
     uint32_t status_reg;
     uint16_t frame_len;
 
-    mhr_802_15_4_intra_pan_short_addr_t *p_mhr = (mhr_802_15_4_intra_pan_short_addr_t*)rx_buffer;
-    frame_magic_data_t *p_payload = (frame_magic_data_t*)&rx_buffer[sizeof(mhr_802_15_4_intra_pan_short_addr_t)];
+    mhr_802_15_4_intra_pan_short_addr_t *p_mhr = (mhr_802_15_4_intra_pan_short_addr_t*)(p_diag_frame->frame_buffer);
+    frame_magic_data_t *p_payload = (frame_magic_data_t*)&p_diag_frame->frame_buffer[sizeof(mhr_802_15_4_intra_pan_short_addr_t)];
 
+    (void)p_mhr;
+    (void)p_payload;
+
+    // NRF_LOG_INFO("(%d) start simple_rx", rtc_m_get_time_ms());
 
     /* Clear local RX buffer to avoid having leftovers from previous receptions  This is not necessary but is included here to aid reading
-        * the RX buffer.
-        * This is a good place to put a breakpoint. Here (after first time through the loop) the local status register will be set for last event
-        * and if a good receive has happened the data buffer will have the data in it, and frame_len will be set to the length of the RX frame. */
-    memset(rx_buffer, 0, sizeof(rx_buffer));
+     * the RX buffer.
+     * This is a good place to put a breakpoint. Here (after first time through the loop) the local status register will be set for last event
+     * and if a good receive has happened the data buffer will have the data in it, and frame_len will be set to the length of the RX frame. */
+    memset(&data_packet, 0, sizeof(data_packet_t));
 
     /* Set response frame timeout. */
     // dwt_setrxtimeout(0);    // DISABLE TIMEOUT
@@ -269,100 +390,113 @@ simple_rx() {
         frame_len = dwt_getframelength();
         if (frame_len <= FRAME_LEN_MAX)
         {
-            dwt_readrxdata(rx_buffer, frame_len - FCS_LEN, 0); /* No need to read the FCS/CRC. */
+            p_diag_frame->frame_len = frame_len;
+            dwt_readrxdata(p_diag_frame->frame_buffer, frame_len, 0); /* read with the FCS/CRC. */
         }
 
         /* Clear good RX frame event in the DW IC status register. */
-        dwt_writesysstatuslo(DWT_INT_RXFCG_BIT_MASK);
+        // dwt_writesysstatuslo(DWT_INT_RXFCG_BIT_MASK);
 
         /* check magic number */
         if (p_payload->magic == MAGIC_NUMBER)
         {
-            NRF_LOG_INFO("(%d) Frame Received: len = %d (SRC_ADDR: %d, ID:0x%02X, MAGIC:0x%08X)", (int)xTaskGetTickCount(), frame_len, p_mhr->src_addr, p_payload->id, p_payload->magic);
+            // NRF_LOG_INFO("(%d) Frame Received: len = %d (SRC_ADDR: %d, ID:0x%02X, MAGIC:0x%08X)", rtc_m_get_time_ms(), frame_len, p_mhr->src_addr, p_payload->id, p_payload->magic);
+            ret = 0;
+            // ret_usb = read_diag_cir_to_usb();
         }
         else
         {
-            NRF_LOG_ERROR("(%d) Frame Received: len = %d (SRC_ADDR: %d, ID:0x%02X, MAGIC:0x%08X)", (int)xTaskGetTickCount(), frame_len, p_mhr->src_addr, p_payload->id, p_payload->magic);
+            // NRF_LOG_ERROR("(%d) Frame Received: len = %d (SRC_ADDR: %d, ID:0x%02X, MAGIC:0x%08X)", rtc_m_get_time_ms(), frame_len, p_mhr->src_addr, p_payload->id, p_payload->magic);
         }
 
-
+        ret_usb = read_diag_cir_to_usb();
     }
     else
     {
-
-        // ->CHECK EACH STATUS REGISTER OR USING -> dwt_readeventcounters
-        // SFD timeout
-        if (status_reg & DWT_INT_RXSTO_BIT_MASK)
-        {
-            NRF_LOG_ERROR("(%d) SFD timeout", (int)xTaskGetTickCount());
-        }
-        // Preamble timeout
-        if (status_reg & DWT_INT_RXPTO_BIT_MASK)
-        {
-            NRF_LOG_ERROR("(%d) Preamble timeout", (int)xTaskGetTickCount());
-        }
-        // RX frame wait timeout
-        if (status_reg & DWT_INT_RXFTO_BIT_MASK)
-        {
-            NRF_LOG_ERROR("(%d) RX frame wait timeout", (int)xTaskGetTickCount());
-        }
-        // RX frame CRC error
-        if (status_reg & DWT_INT_RXFCE_BIT_MASK)
-        {
-            NRF_LOG_ERROR("(%d) RX frame CRC error", (int)xTaskGetTickCount());
-        }
+        // // ->CHECK EACH STATUS REGISTER OR USING -> dwt_readeventcounters
+        // // SFD timeout
+        // if (status_reg & DWT_INT_RXSTO_BIT_MASK)
+        // {
+        //     NRF_LOG_ERROR("(%d) SFD timeout", rtc_m_get_time_ms());
+        // }
+        // // Preamble timeout
+        // if (status_reg & DWT_INT_RXPTO_BIT_MASK)
+        // {
+        //     NRF_LOG_ERROR("(%d) Preamble timeout", rtc_m_get_time_ms());
+        // }
+        // // RX frame wait timeout
+        // if (status_reg & DWT_INT_RXFTO_BIT_MASK)
+        // {
+        //     NRF_LOG_ERROR("(%d) RX frame wait timeout", rtc_m_get_time_ms());
+        // }
+        // // RX frame CRC error
+        // if (status_reg & DWT_INT_RXFCE_BIT_MASK)
+        // {
+        //     NRF_LOG_ERROR("(%d) RX frame CRC error", rtc_m_get_time_ms());
+        // }
         // // add more error cases
         // if (status_reg & ...)
         // {
         //     /* code */
         // }
 
-        /* Clear RX error events in the DW IC status register. */
-        dwt_writesysstatuslo(SYS_STATUS_ALL_RX_ERR);
     }
 
+    /* Clear RX error events in the DW IC status register. */
+    dwt_writesysstatuslo(SYS_STATUS_ALL_RX_ERR);
 
-    /* Read event counters. */
-    dwt_readeventcounters(&event_cnt);
-    char print_buffer[256];
-    sprintf(print_buffer,
-        "PHE:   %4i\n"
-        "RSL:   %4i\n"
-        "CRCG:  %4i\n"
-        "CRCB:  %4i\n"
-        "ARFE:  %4i\n"
-        "OVER:  %4i\n"
-        "SFDTO: %4i\n"
-        "PTO:   %4i\n"
-        "RTO:   %4i\n"
-        "TXF:   %4i\n"
-        "HPW:   %4i\n"
-        "CRCE:  %4i\n"
-        "PREJ:  %4i\n"
-        "SFDD:  %4i\n"
-        "STSE:  %4i\n",
-        event_cnt.PHE,   // 12-bit number of received header error events
-        event_cnt.RSL,   // 12-bit number of received frame sync loss event events
-        event_cnt.CRCG,  // 12-bit number of good CRC received frame events
-        event_cnt.CRCB,  // 12-bit number of bad CRC (CRC error) received frame events
-        event_cnt.ARFE,   // 8-bit number of address filter error events
-        event_cnt.OVER,   // 8-bit number of receive buffer overrun events (used in double buffer mode)
-        event_cnt.SFDTO, // 12-bit number of SFD timeout events
-        event_cnt.PTO,   // 12-bit number of Preamble timeout events
-        event_cnt.RTO,    // 8-bit number of RX frame wait timeout events
-        event_cnt.TXF,   // 12-bit number of transmitted frame events
-        event_cnt.HPW,    // 8-bit half period warning events (when delayed RX/TX enable is used)
-        event_cnt.CRCE,   // 8-bit SPI CRC error events
-        event_cnt.PREJ,  // 12-bit number of Preamble rejection events
-        event_cnt.SFDD,  // 12-bit SFD detection events ... only DW3720
-        event_cnt.STSE   // 8-bit STS error/warning events
-    );
-    NRF_LOG_INFO("\n\n%s", print_buffer );
+    // /* Read event counters. */
+    // dwt_deviceentcnts_t event_cnt;
+    // dwt_readeventcounters(&event_cnt);
+    // char print_buffer[256];
+    // sprintf(print_buffer,
+    //     "PHE:   %4i\n"
+    //     "RSL:   %4i\n"
+    //     "CRCG:  %4i\n"
+    //     "CRCB:  %4i\n"
+    //     "ARFE:  %4i\n"
+    //     "OVER:  %4i\n"
+    //     "SFDTO: %4i\n"
+    //     "PTO:   %4i\n"
+    //     "RTO:   %4i\n"
+    //     "TXF:   %4i\n"
+    //     "HPW:   %4i\n"
+    //     "CRCE:  %4i\n"
+    //     "PREJ:  %4i\n"
+    //     "SFDD:  %4i\n"
+    //     "STSE:  %4i\n",
+    //     event_cnt.PHE,   // 12-bit number of received header error events
+    //     event_cnt.RSL,   // 12-bit number of received frame sync loss event events
+    //     event_cnt.CRCG,  // 12-bit number of good CRC received frame events
+    //     event_cnt.CRCB,  // 12-bit number of bad CRC (CRC error) received frame events
+    //     event_cnt.ARFE,   // 8-bit number of address filter error events
+    //     event_cnt.OVER,   // 8-bit number of receive buffer overrun events (used in double buffer mode)
+    //     event_cnt.SFDTO, // 12-bit number of SFD timeout events
+    //     event_cnt.PTO,   // 12-bit number of Preamble timeout events
+    //     event_cnt.RTO,    // 8-bit number of RX frame wait timeout events
+    //     event_cnt.TXF,   // 12-bit number of transmitted frame events
+    //     event_cnt.HPW,    // 8-bit half period warning events (when delayed RX/TX enable is used)
+    //     event_cnt.CRCE,   // 8-bit SPI CRC error events
+    //     event_cnt.PREJ,  // 12-bit number of Preamble rejection events
+    //     event_cnt.SFDD,  // 12-bit SFD detection events ... only DW3720
+    //     event_cnt.STSE   // 8-bit STS error/warning events
+    // );
+    // NRF_LOG_INFO("\n\n%s", print_buffer );
 
-
+    if (!ret) {
+        bsp_board_led_invert(BSP_BOARD_LED_1);
+        if (!ret_usb) {
+            bsp_board_led_invert(BSP_BOARD_LED_0);
+        } else {
+            bsp_board_led_off(BSP_BOARD_LED_0);
+        }
+    } else {
+        bsp_board_leds_off();
+    }
 }
 
-void
+__attribute__((unused))
+static void
 simple_tx() {
 
     static uint8_t tx_buffer[FRAME_LEN_MAX];
@@ -370,8 +504,7 @@ simple_tx() {
     mhr_802_15_4_intra_pan_short_addr_t *p_mhr = (mhr_802_15_4_intra_pan_short_addr_t*)tx_buffer;
     frame_magic_data_t *p_payload = (frame_magic_data_t*)&tx_buffer[sizeof(mhr_802_15_4_intra_pan_short_addr_t)];
 
-    // NRF_LOG_INFO("(%d) start simple_tx", (int)xTaskGetTickCount());
-
+    NRF_LOG_INFO("(%d) start simple_tx", rtc_m_get_time_ms());
 
     /* mhr */
     /* frame_ctrl: (0x8841 to indicate a data frame using 16-bit addressing, and frame type of data, ack req: false).
@@ -396,6 +529,7 @@ simple_tx() {
     /* paylaod data */
     p_payload->id = MAGIC_ID;
     p_payload->magic = MAGIC_NUMBER;
+    p_payload->tx_timestamp_ms = (uint32_t)rtc_m_get_time_ms();
 
     frame_len = sizeof(mhr_802_15_4_intra_pan_short_addr_t) + sizeof(frame_magic_data_t);
 
@@ -419,17 +553,20 @@ simple_tx() {
     /* Clear TX frame sent event. */
     dwt_writesysstatuslo(DWT_INT_TXFRS_BIT_MASK);
 
-    // NRF_LOG_INFO("(%d) TX Frame Sent", (int)xTaskGetTickCount());
+    // NRF_LOG_INFO("(%d) TX Frame Sent", rtc_m_get_time_ms());
 
     /* Increment the blink frame sequence number (modulo 256). */
     p_mhr->seq_num++;
 
+    p_payload->idx++;
+
     /* Execute a delay between transmissions. */
-    Sleep(TX_DELAY_MS);
+    vTaskDelay(pdMS_TO_TICKS(TX_DELAY_MS));
 
 }
 
-void
+__attribute__((unused))
+static void
 simple_tx_disturb() {
 
     static uint8_t tx_buffer[FRAME_LEN_MAX];
@@ -437,7 +574,7 @@ simple_tx_disturb() {
     mhr_802_15_4_intra_pan_short_addr_t *p_mhr = (mhr_802_15_4_intra_pan_short_addr_t*)tx_buffer;
     frame_magic_data_t *p_payload = (frame_magic_data_t*)&tx_buffer[sizeof(mhr_802_15_4_intra_pan_short_addr_t)];
 
-    // NRF_LOG_INFO("(%d) start simple_tx_disturb", (int)xTaskGetTickCount());
+    // NRF_LOG_INFO("(%d) start simple_tx_disturb", rtc_m_get_time_ms());
 
 
     /* mhr */
@@ -486,14 +623,13 @@ simple_tx_disturb() {
     /* Clear TX frame sent event. */
     dwt_writesysstatuslo(DWT_INT_TXFRS_BIT_MASK);
 
-    // NRF_LOG_INFO("(%d) TX Frame Sent", (int)xTaskGetTickCount());
+    // NRF_LOG_INFO("(%d) TX Frame Sent", rtc_m_get_time_ms());
 
     /* Increment the blink frame sequence number (modulo 256). */
     p_mhr->seq_num++;
 
     /* Execute a delay between transmissions. */
-    // Sleep(TX_DELAY_MS);
-
+    Sleep(TX_DELAY_MS);
 }
 
 
@@ -503,21 +639,32 @@ void app_main() {
 
     for ( ;; ) {
 
+#if TX_DEVICE_ENABLED
+        for ( ;; ) {
+            simple_tx();
+        }
+#endif
 
-        simple_tx();
+#if RX_DEVICE_ENABLED
+        for ( ;; ) {
+            simple_rx();
+        }
+#endif
 
-        // simple_rx();
+#if DISTURB_DEVICE_ENABLED
+        for ( ;; ) {
+            simple_tx_disturb();
+        }
+#endif
 
-        // simple_tx_disturb();
+        // continue;
 
-        continue;
+        // vTaskDelay(1000);
+        // NRF_LOG_INFO("(%d) app_main running.", rtc_m_get_time_ms());
 
-        vTaskDelay(1000);
-        NRF_LOG_INFO("(%d) app_main running.", (int)xTaskGetTickCount());
-
-        /* example to use usb out */
-        char str_buffer[256];
-        sprintf(str_buffer,"(%d) app_main running.\n", (int)xTaskGetTickCount());
-        usb_m_write((uint8_t*)str_buffer, strlen(str_buffer));
+        // /* example to use usb out */
+        // char str_buffer[256];
+        // sprintf(str_buffer,"(%d) app_main running.\n", rtc_m_get_time_ms());
+        // usb_m_write((uint8_t*)str_buffer, strlen(str_buffer));
     }
 }
