@@ -129,11 +129,12 @@ def thread_read_data(arg, update_plot_data):
                     cir_mag = [abs(s) for s in cir_cmplx]
 
                     cir_cmplx_str = cir_packet.complex_list_to_str(cir_cmplx)
+                    frame_buffer_str = ''.join(f'{byte:02X}' for byte in diag_packet["frame_buffer"])
 
                     writer.writerow((
                         formatted_date_time,
                         diag_packet["frame_len"],
-                        diag_packet["frame_buffer"],
+                        frame_buffer_str,
                         # parsed frame/payload of frame_buffer (check if values are garbage on bad rx)
                         mhr_data["frame_ctrl"],
                         mhr_data["seq_num"],
