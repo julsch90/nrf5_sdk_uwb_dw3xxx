@@ -79,6 +79,8 @@ typedef struct __attribute__((__packed__)) {
     uint8_t frame_buffer[FRAME_LEN_MAX];
     dwt_deviceentcnts_t event_cnt;          // 24 bytes
     dwt_rxdiag_t rxdiag;                    // 112 bytes
+    uint8_t dgc;
+    int8_t rssi;
     uint16_t cir_start_idx;
     uint16_t cir_len;
     uint8_t cir_buffer[CIR_BUFFER_LEN];
@@ -271,12 +273,8 @@ read_diag_cir_to_usb() {
 
     int ret = -1;
     uint16_t fp_int;
-    uint32_t dgc_decision;  // DGC_DECISION 0-7 [NOTE] not working if using pcode 42 (42==10 to disable dgc)
-    float rssi;
 
-    (void)dgc_decision;
     (void)fp_int; // NOT USED HERE
-    (void)rssi;
 
     // // CALC PROCESS TIME
     // CoreDebug->DEMCR |= 0x01000000; // enable DWT
@@ -285,26 +283,20 @@ read_diag_cir_to_usb() {
     // uint32_t t1 = DWT->CYCCNT;
 
     dwt_readeventcounters(&p_diag_frame->event_cnt);
-
     dwt_readdiagnostics(&p_diag_frame->rxdiag);
+
+    p_diag_frame->rx_timestamp_ms = rtc_m_get_time_ms();
+    p_diag_frame->dgc = dwt_get_dgcdecision();  /* read digital gain control */
+    p_diag_frame->rssi = dwt_calc_rssi(&p_diag_frame->rxdiag, p_diag_frame->dgc);
+    p_diag_frame->cir_start_idx = CIR_FP_IDX_OFFSET;
+    p_diag_frame->cir_len = CIR_LEN;
 
     // /* first path idx [10.6 bits fixed point value] */
     // fp_int = p_diag_frame->rxdiag.ipatovFpIndex >> 6;
 
-    p_diag_frame->cir_start_idx = CIR_FP_IDX_OFFSET;
-    p_diag_frame->cir_len = CIR_LEN;
-
     /* read accumulator */
     // dwt_readaccdata(p_diag_frame->cir_buffer, CIR_BUFFER_LEN, (fp_int + CIR_FP_IDX_OFFSET));
     dwt_readaccdata(p_diag_frame->cir_buffer, CIR_BUFFER_LEN, CIR_FP_IDX_OFFSET);
-
-    p_diag_frame->rx_timestamp_ms = rtc_m_get_time_ms();
-
-    // /* read digital gain control */
-    // dgc_decision = dwt_get_dgcdecision();
-
-    // /* get rssi */
-    // rssi = dwt_calc_rssi(&rx_diag, dgc_decision);
 
 #if USB_M_ENABLED
 
