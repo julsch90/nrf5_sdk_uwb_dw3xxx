@@ -107,7 +107,6 @@ def thread_read_data(arg, update_plot_data):
         data_packet = cir_packet.parse_data_packet(data_buffer)
         diag_packet = cir_packet.parse_diag_frame(data_packet["data"])
 
-        # TODO: why is this working only if (frame_len == struct.calcsize(cir_packet.mhr_data_format)) ?
         if (len(diag_packet["frame_buffer"]) >= struct.calcsize(cir_packet.mhr_data_format)) and diag_packet["frame_len"] == struct.calcsize(cir_packet.mhr_data_format):     #
         # if (len(diag_packet["frame_buffer"]) >= struct.calcsize(cir_packet.mhr_data_format)) and diag_packet["frame_len"] >= struct.calcsize(cir_packet.mhr_data_format):
             frame_buffer = diag_packet["frame_buffer"][0:24]

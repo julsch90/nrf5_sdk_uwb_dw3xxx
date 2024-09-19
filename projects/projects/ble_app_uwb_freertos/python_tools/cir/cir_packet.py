@@ -202,7 +202,7 @@ def parse_dwt_rxdiag(data):
     # convert 12 bit sign value
     xtalOffset = unpacked_data[11]
     if xtalOffset > 0x7FF:
-        return xtalOffset - 0x1000
+        xtalOffset = xtalOffset - 0x1000
 
     # Structure the parsed values in a dictionary for better readability
     parsed_values = {
