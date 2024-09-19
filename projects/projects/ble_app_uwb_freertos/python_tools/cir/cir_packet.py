@@ -94,7 +94,6 @@ def parse_mhr_data(data):
     return parsed_values
 
 
-
 # Define the format string for the struct (24byte)
 device_event_cnt_format = (
     '='    # Native alignment, but no padding
@@ -253,17 +252,18 @@ def parse_dwt_rxdiag(data):
 
 def parse_diag_frame(data):
     # Define format string for diag_frame_t
-    diag_frame_fmt = f'=IH{FRAME_LEN_MAX}s{struct.calcsize(device_event_cnt_format)}s{struct.calcsize(dwt_rxdiag_format)}sBbHH{CIR_BUFFER_LEN}s'
+    diag_frame_fmt = f'=IIH{FRAME_LEN_MAX}s{struct.calcsize(device_event_cnt_format)}s{struct.calcsize(dwt_rxdiag_format)}sBbHH{CIR_BUFFER_LEN}s'
 
     # Calculate expected size of the data
     rx_timestamp_ms_size = struct.calcsize(f'I')
+    status_reg_size = struct.calcsize(f'I')
     fixed_size = struct.calcsize(f'H')
     frame_buffer_size = FRAME_LEN_MAX
     event_cnt_size = struct.calcsize(device_event_cnt_format)
     rxdiag_size = struct.calcsize(dwt_rxdiag_format)
     ext_info_size = struct.calcsize(f'BbHH')
     cir_buffer_size = CIR_BUFFER_LEN
-    total_size = rx_timestamp_ms_size + fixed_size + frame_buffer_size + event_cnt_size + rxdiag_size + ext_info_size + cir_buffer_size
+    total_size = rx_timestamp_ms_size + status_reg_size + fixed_size + frame_buffer_size + event_cnt_size + rxdiag_size + ext_info_size + cir_buffer_size
 
     if len(data) != total_size:
         raise ValueError("Data length does not match the expected size!")
@@ -272,18 +272,20 @@ def parse_diag_frame(data):
     unpacked = struct.unpack(diag_frame_fmt, data)
 
     rx_timestamp_ms = unpacked[0]
-    frame_len = unpacked[1]
-    frame_buffer = unpacked[2]
-    event_cnt = unpacked[3]
-    rxdiag = unpacked[4]
-    dgc = unpacked[5]
-    rssi = unpacked[6]
-    cir_start_idx = unpacked[7]
-    cir_len = unpacked[8]
-    cir_buffer = unpacked[9]
+    status_reg = unpacked[1]
+    frame_len = unpacked[2]
+    frame_buffer = unpacked[3]
+    event_cnt = unpacked[4]
+    rxdiag = unpacked[5]
+    dgc = unpacked[6]
+    rssi = unpacked[7]
+    cir_start_idx = unpacked[8]
+    cir_len = unpacked[9]
+    cir_buffer = unpacked[10]
 
     return {
         'rx_timestamp_ms': rx_timestamp_ms,
+        'status_reg': status_reg,
         'frame_len': frame_len,
         'frame_buffer': frame_buffer,
         'event_cnt': event_cnt,

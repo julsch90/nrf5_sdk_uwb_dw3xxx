@@ -81,13 +81,16 @@ def thread_read_data(arg, update_plot_data):
     if REC_ENABLED:
         f = open(filename, "wb")
 
+    start_time = time.time()  # Record the start time
+    data_size_bytes = 0
+
     while True:
 
         data_buffer = ser.read(5000)
         # print(len(data_buffer))
 
-        # receiving packet should match the size of 2086 (packet size)
-        if len(data_buffer) != 2086:
+        # receiving packet should match the size of 2090 (packet size)
+        if len(data_buffer) != 2090:
             # read empty
             ser.read(5000)
             continue
@@ -106,14 +109,7 @@ def thread_read_data(arg, update_plot_data):
 
         data_packet = cir_packet.parse_data_packet(data_buffer)
         diag_packet = cir_packet.parse_diag_frame(data_packet["data"])
-
-        if (len(diag_packet["frame_buffer"]) >= struct.calcsize(cir_packet.mhr_data_format)) and diag_packet["frame_len"] == struct.calcsize(cir_packet.mhr_data_format):     #
-        # if (len(diag_packet["frame_buffer"]) >= struct.calcsize(cir_packet.mhr_data_format)) and diag_packet["frame_len"] >= struct.calcsize(cir_packet.mhr_data_format):
-            frame_buffer = diag_packet["frame_buffer"][0:24]
-            mhr_data = cir_packet.parse_mhr_data(frame_buffer)
-            # print(mhr_data["magic"])
-        else:
-            continue
+        mhr_data = cir_packet.parse_mhr_data(diag_packet["frame_buffer"][0:24])
         device_event_cnt = cir_packet.parse_device_event_cnt(diag_packet["event_cnt"])
         rxdiag = cir_packet.parse_dwt_rxdiag(diag_packet["rxdiag"])
         cir_cmplx = cir_packet.parse_cir_buffer(diag_packet["cir_buffer"])

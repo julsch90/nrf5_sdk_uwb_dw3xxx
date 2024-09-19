@@ -104,7 +104,7 @@ def thread_read_data(arg, update_plot_data):
                 while True:
                     # Read a chunk of data
                     date_time_chunk = file.read(23)
-                    data_chunk = file.read(2086)
+                    data_chunk = file.read(2090)
 
                     # Break the loop if no more data is read (i.e., end of file)
                     if not data_chunk:
@@ -113,15 +113,7 @@ def thread_read_data(arg, update_plot_data):
                     formatted_date_time = date_time_chunk.decode('utf-8')
                     data_packet = cir_packet.parse_data_packet(data_chunk)
                     diag_packet = cir_packet.parse_diag_frame(data_packet["data"])
-
-                    if (len(diag_packet["frame_buffer"]) >= struct.calcsize(cir_packet.mhr_data_format)) and diag_packet["frame_len"] == struct.calcsize(cir_packet.mhr_data_format):
-                    # if (len(diag_packet["frame_buffer"]) >= struct.calcsize(cir_packet.mhr_data_format)) and diag_packet["frame_len"] >= struct.calcsize(cir_packet.mhr_data_format):
-                        frame_buffer = diag_packet["frame_buffer"][0:24]
-                        mhr_data = cir_packet.parse_mhr_data(frame_buffer)
-                        # print(mhr_data["magic"])
-                    else:
-                        continue
-
+                    mhr_data = cir_packet.parse_mhr_data(diag_packet["frame_buffer"][0:24])
                     device_event_cnt = cir_packet.parse_device_event_cnt(diag_packet["event_cnt"])
                     rxdiag = cir_packet.parse_dwt_rxdiag(diag_packet["rxdiag"])
                     cir_cmplx = cir_packet.parse_cir_buffer(diag_packet["cir_buffer"])
@@ -132,6 +124,7 @@ def thread_read_data(arg, update_plot_data):
 
                     writer.writerow((
                         formatted_date_time,
+                        diag_packet["status_reg"],      # check via status flags
                         diag_packet["frame_len"],
                         frame_buffer_str,
                         # parsed frame/payload of frame_buffer (check if values are garbage on bad rx)

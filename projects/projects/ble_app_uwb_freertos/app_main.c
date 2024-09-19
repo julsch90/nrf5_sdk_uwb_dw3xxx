@@ -31,6 +31,8 @@
 #define RX_DEVICE_ENABLED           1
 #define DISTURB_DEVICE_ENABLED      0
 
+#define WRITE_DIAG_TO_USB_ON_EVERY_RX_STATUS_EVENT_ENABLED  1   /* otherwise only on rx_ok and magic number match */
+
 #if ((TX_DEVICE_ENABLED + RX_DEVICE_ENABLED + DISTURB_DEVICE_ENABLED) != 1)
 #error "choose only one"
 #endif
@@ -43,7 +45,7 @@
 
 
 #define TX_DELAY_MS                     20      /* Inter-frame delay period, in milliseconds. */
-#define RX_TIMEOUT_UUS                  50000   /* Receive response timeout, expressed in UWB microseconds (UUS, 1 uus = 512/499.2 us) */
+#define RX_TIMEOUT_UUS                  100000  /* Receive response timeout, expressed in UWB microseconds (UUS, 1 uus = 512/499.2 us) */
 
 #define MAGIC_ID                        0x01
 #define MAGIC_NUMBER                    0x12345678
@@ -74,8 +76,8 @@ typedef struct __attribute__((__packed__)) {
 
 typedef struct __attribute__((__packed__)) {
     uint32_t rx_timestamp_ms;
+    uint32_t status_reg;
     uint16_t frame_len;
-    // uint32_t status_reg;
     uint8_t frame_buffer[FRAME_LEN_MAX];
     dwt_deviceentcnts_t event_cnt;          // 24 bytes
     dwt_rxdiag_t rxdiag;                    // 112 bytes
@@ -347,7 +349,7 @@ simple_rx() {
 
     int ret = -1;
     int ret_usb = -1;
-    uint32_t status_reg;
+    uint32_t status_reg = 0;
     uint16_t frame_len;
 
     mhr_802_15_4_intra_pan_short_addr_t *p_mhr = (mhr_802_15_4_intra_pan_short_addr_t*)(p_diag_frame->frame_buffer);
@@ -376,6 +378,8 @@ simple_rx() {
         * function to access it. */
     waitforsysstatus(&status_reg, NULL, (DWT_INT_RXFCG_BIT_MASK | SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR), 0);
 
+    p_diag_frame->status_reg = status_reg;
+
     if (status_reg & DWT_INT_RXFCG_BIT_MASK)
     {
         /* A frame has been received, copy it to our local buffer. */
@@ -394,17 +398,26 @@ simple_rx() {
         {
             // NRF_LOG_INFO("(%d) Frame Received: len = %d (SRC_ADDR: %d, ID:0x%02X, MAGIC:0x%08X)", rtc_m_get_time_ms(), frame_len, p_mhr->src_addr, p_payload->id, p_payload->magic);
             ret = 0;
-            // ret_usb = read_diag_cir_to_usb();
+#if !WRITE_DIAG_TO_USB_ON_EVERY_RX_STATUS_EVENT_ENABLED
+            ret_usb = read_diag_cir_to_usb();
+#endif
         }
         else
         {
             // NRF_LOG_ERROR("(%d) Frame Received: len = %d (SRC_ADDR: %d, ID:0x%02X, MAGIC:0x%08X)", rtc_m_get_time_ms(), frame_len, p_mhr->src_addr, p_payload->id, p_payload->magic);
         }
-
-        ret_usb = read_diag_cir_to_usb();
     }
     else
     {
+
+        /* just read it (even if it might be garbage)  */
+        frame_len = dwt_getframelength();
+        if (frame_len <= FRAME_LEN_MAX)
+        {
+            p_diag_frame->frame_len = frame_len;
+            dwt_readrxdata(p_diag_frame->frame_buffer, frame_len, 0); /* read with the FCS/CRC. */
+        }
+
         // // ->CHECK EACH STATUS REGISTER OR USING -> dwt_readeventcounters
         // // SFD timeout
         // if (status_reg & DWT_INT_RXSTO_BIT_MASK)
@@ -426,13 +439,16 @@ simple_rx() {
         // {
         //     NRF_LOG_ERROR("(%d) RX frame CRC error", rtc_m_get_time_ms());
         // }
-        // // add more error cases
-        // if (status_reg & ...)
-        // {
-        //     /* code */
-        // }
-
+        // // // add more error cases
+        // // if (status_reg & ...)
+        // // {
+        // //     /* code */
+        // // }
     }
+
+#if WRITE_DIAG_TO_USB_ON_EVERY_RX_STATUS_EVENT_ENABLED
+    ret_usb = read_diag_cir_to_usb();
+#endif
 
     /* Clear RX error events in the DW IC status register. */
     dwt_writesysstatuslo(SYS_STATUS_ALL_RX_ERR);
