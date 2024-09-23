@@ -19,6 +19,48 @@ import csv
 PLOT_ENABLED = 0
 
 
+header = ["date_time",                      # date time of whole message (set by computer)
+          "status_reg",                     # status register of dw3000 module after received something (check flags via user manual)
+          "payload_len",                    # received payload length
+          "payload",                        # received payload content
+          "payload_mhr_frame_ctrl",         # mac header: parsed frame ctrl (from payload)
+          "payload_mhr_seq_num",            # mac header: parsed frame sequence number (from payload)
+          "payload_mhr_dst_pan_id",         # mac header: parsed destination pan id (from payload)
+          "payload_mhr_dst_addr",           # mac header: parsed destination addr (from payload)
+          "payload_mhr_src_addr",           # mac header: parsed source addr (from payload)
+          "payload_data_tx_timestamp_ms",   # local tx_timestamp_ms of sender device (parsed from payload)
+          "payload_data_idx",               # index number of sender device incremented every transmit (parsed from payload)
+          "payload_data_magic",             # magic number of sender device (parsed from payload)
+          "payload_fcs",                    # frame check sequence of payload
+          "event_cnt_PHE",
+          "event_cnt_RSL",
+          "event_cnt_CRCG",
+          "event_cnt_CRCB",
+          "event_cnt_ARFE",
+          "event_cnt_OVER",
+          "event_cnt_SFDTO",
+          "event_cnt_PTO",
+          "event_cnt_RTO",
+          "event_cnt_TXF",
+          "event_cnt_HPW",
+          "event_cnt_CRCE",
+          "event_cnt_PREJ",
+          "event_cnt_SFDD",
+          "event_cnt_STSE",
+          "dgc",                            # digital gain control (not valid if not set valid preamble code)
+          "rssi",                           # rssi (not valid if not set valid preamble code)
+          "cir_start_idx",
+          "cir_len",
+          "ipatovRxStatus",
+          "ipatovPeak",
+          "ipatovPower",
+          "ipatovF1",
+          "ipatovF2",
+          "ipatovF3",
+          "ipatovFpIndex",
+          "cir_cmplx"
+        ]
+
 ####################################################
 ##########  plot data   ############################
 ####################################################
@@ -100,6 +142,9 @@ def thread_read_data(arg, update_plot_data):
         # Open the .csv file for writing
         with open(csv_file_path, 'w', newline='') as csv_file:
             writer = csv.writer(csv_file, delimiter=';')
+
+            writer.writerow(header)
+
             with open(file_path, 'rb') as file:   # Open file in binary mode
                 while True:
                     # Read a chunk of data
