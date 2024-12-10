@@ -296,6 +296,8 @@ usb_m_write(uint8_t *p_data, uint16_t length) {
         return -1;
     }
 
+    /* clear tx done event */
+    xQueueReceive(m_usb_evt_tx_done_queue_handle, &d, 0);
 
     ret = app_usbd_cdc_acm_write(&m_app_cdc_acm, p_data, length);
     if (ret != NRF_SUCCESS) {

@@ -66,12 +66,50 @@ class MainWindow(QtWidgets.QMainWindow):
         self.data_line.setData(self.x, self.y)  # Update the data.
 
 ####################################################
+##########  handle data   ##########################
+####################################################
+
+PACKET_SIZE = 2090
+
+def handle_packet(data_buffer, f, update_plot_data):
+
+    # print(f"Processing packet of size {len(data_buffer)}")
+
+    date_time = datetime.now()
+    formatted_date_time = date_time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]  # Truncate microseconds to milliseconds
+    time_bytes = formatted_date_time.encode('utf-8')
+
+    # Ensure the length is fixed (23 characters in this example)
+    if len(formatted_date_time) != 23:
+        raise ValueError("Formatted time does not have the expected length")
+
+    # dump to rec file
+    if REC_ENABLED:
+        f.write(time_bytes+data_buffer)
+
+    data_packet = cir_packet.parse_data_packet(data_buffer)
+    diag_packet = cir_packet.parse_diag_frame(data_packet["data"])
+    mhr_data = cir_packet.parse_mhr_data(diag_packet["frame_buffer"][0:24])
+    device_event_cnt = cir_packet.parse_device_event_cnt(diag_packet["event_cnt"])
+    rxdiag = cir_packet.parse_dwt_rxdiag(diag_packet["rxdiag"])
+    cir_cmplx = cir_packet.parse_cir_buffer(diag_packet["cir_buffer"])
+    cir_mag = [abs(s) for s in cir_cmplx]
+
+    # print(f'seq_num={mhr_data["seq_num"]}')
+
+    if PLOT_ENABLED:
+        update_plot_data(cir_mag, diag_packet["cir_start_idx"], diag_packet["cir_len"])
+
+
+####################################################
 ##########  read data   ############################
 ####################################################
 
+stop_threads = False
+
 def thread_read_data(arg, update_plot_data):
 
-    ser = serial.Serial(serial_port, timeout=0.002)
+    ser = serial.Serial(serial_port, timeout=0.005)
 
     # set filename
     date_time = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -81,42 +119,25 @@ def thread_read_data(arg, update_plot_data):
     if REC_ENABLED:
         f = open(filename, "wb")
 
-    start_time = time.time()  # Record the start time
-    data_size_bytes = 0
+    while not stop_threads:
 
-    while True:
+        data_buffer = ser.read(10*PACKET_SIZE)
+        # print(f"len(data_buffer)={len(data_buffer)}")
 
-        data_buffer = ser.read(5000)
-        # print(len(data_buffer))
-
-        # receiving packet should match the size of 2090 (packet size)
-        if len(data_buffer) != 2090:
-            # read empty
-            ser.read(5000)
+        # receiving packet should match the PACKET_SIZE
+        if (len(data_buffer) % PACKET_SIZE) != 0:
+            print(f"The length of data_buffer is not a multiple of {PACKET_SIZE}.")
+            if len(data_buffer) > 0:
+                print(f"packet drops: len(data_buffer)={len(data_buffer)}")
             continue
 
-        date_time = datetime.now()
-        formatted_date_time = date_time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]  # Truncate microseconds to milliseconds
-        time_bytes = formatted_date_time.encode('utf-8')
+        # Process all complete packets in the data_buffer
+        while len(data_buffer) >= PACKET_SIZE:
+            handle_packet(data_buffer[:PACKET_SIZE], f, update_plot_data)
+            data_buffer = data_buffer[PACKET_SIZE:]
 
-        # Ensure the length is fixed (23 characters in this example)
-        if len(formatted_date_time) != 23:
-            raise ValueError("Formatted time does not have the expected length")
-
-        # dump to rec file
-        if REC_ENABLED:
-            f.write(time_bytes+data_buffer)
-
-        data_packet = cir_packet.parse_data_packet(data_buffer)
-        diag_packet = cir_packet.parse_diag_frame(data_packet["data"])
-        mhr_data = cir_packet.parse_mhr_data(diag_packet["frame_buffer"][0:24])
-        device_event_cnt = cir_packet.parse_device_event_cnt(diag_packet["event_cnt"])
-        rxdiag = cir_packet.parse_dwt_rxdiag(diag_packet["rxdiag"])
-        cir_cmplx = cir_packet.parse_cir_buffer(diag_packet["cir_buffer"])
-        cir_mag = [abs(s) for s in cir_cmplx]
-
-        if PLOT_ENABLED:
-            update_plot_data(cir_mag, diag_packet["cir_start_idx"], diag_packet["cir_len"])
+    if REC_ENABLED:
+        f.close()
 
 
 
@@ -133,12 +154,20 @@ if __name__ == '__main__':
 
     # start cir thread
     t = threading.Thread(target=thread_read_data, args=("cir", update_plot_data))
+    t.daemon = True
     t.start()
 
     if PLOT_ENABLED:
         # start window
         app.exec_()
+    else:
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            pass
 
+    stop_threads = True
     # wait for exit cir thread
     t.join()
 

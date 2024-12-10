@@ -18,6 +18,8 @@ import csv
 
 PLOT_ENABLED = 0
 
+PACKET_SIZE = 2090
+
 
 header = ["date_time",                      # date time of whole message (set by computer)
           "status_reg",                     # status register of dw3000 module after received something (check flags via user manual)
@@ -149,7 +151,7 @@ def thread_read_data(arg, update_plot_data):
                 while True:
                     # Read a chunk of data
                     date_time_chunk = file.read(23)
-                    data_chunk = file.read(2090)
+                    data_chunk = file.read(PACKET_SIZE)
 
                     # Break the loop if no more data is read (i.e., end of file)
                     if not data_chunk:

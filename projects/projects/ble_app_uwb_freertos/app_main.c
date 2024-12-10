@@ -31,7 +31,7 @@
 #define RX_DEVICE_ENABLED           1
 #define DISTURB_DEVICE_ENABLED      0
 
-#define WRITE_DIAG_TO_USB_ON_EVERY_RX_STATUS_EVENT_ENABLED  1   /* otherwise only on rx_ok and magic number match */
+#define WRITE_DIAG_TO_USB_ON_EVERY_RX_STATUS_EVENT_ENABLED  0   /* otherwise only on rx_ok and magic number match */
 
 #if ((TX_DEVICE_ENABLED + RX_DEVICE_ENABLED + DISTURB_DEVICE_ENABLED) != 1)
 #error "choose only one"
@@ -396,7 +396,7 @@ simple_rx() {
         /* check magic number */
         if (p_payload->magic == MAGIC_NUMBER)
         {
-            // NRF_LOG_INFO("(%d) Frame Received: len = %d (SRC_ADDR: %d, ID:0x%02X, MAGIC:0x%08X)", rtc_m_get_time_ms(), frame_len, p_mhr->src_addr, p_payload->id, p_payload->magic);
+            // NRF_LOG_INFO("(%d) Frame Received: len = %d, seq=%d (SRC_ADDR: %d, ID:0x%02X, MAGIC:0x%08X)", rtc_m_get_time_ms(), frame_len, p_mhr->seq_num, p_mhr->src_addr, p_payload->id, p_payload->magic);
             ret = 0;
 #if !WRITE_DIAG_TO_USB_ON_EVERY_RX_STATUS_EVENT_ENABLED
             ret_usb = read_diag_cir_to_usb();
