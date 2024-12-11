@@ -302,7 +302,7 @@ read_diag_cir_to_usb() {
 
 #if USB_M_ENABLED
 
-    // data_packet.header = 0xAAAAAAAA;
+    data_packet.header = 0xAAAAAAAA;
     data_packet.data_length = sizeof(diag_frame_t);
     // data_packet.checksum = 0xEEEEEEEE;
 
