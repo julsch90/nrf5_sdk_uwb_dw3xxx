@@ -7,6 +7,7 @@ from random import randint
 from datetime import datetime
 import struct
 
+PACKET_SIZE = 2090
 
 # Constants
 CIR_LEN = 300

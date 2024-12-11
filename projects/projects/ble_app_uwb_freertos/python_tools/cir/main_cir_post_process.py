@@ -3,10 +3,6 @@ import time
 import serial
 import sys
 import numpy as np
-import PyQt5
-from PyQt5 import QtWidgets, QtCore
-from pyqtgraph import PlotWidget, plot
-import pyqtgraph as pg
 import os
 from random import randint
 from datetime import datetime
@@ -17,8 +13,6 @@ import os
 import csv
 
 PLOT_ENABLED = 0
-
-PACKET_SIZE = 2090
 
 
 header = ["date_time",                      # date time of whole message (set by computer)
@@ -67,49 +61,56 @@ header = ["date_time",                      # date time of whole message (set by
 ##########  plot data   ############################
 ####################################################
 
-class MainWindow(QtWidgets.QMainWindow):
+if PLOT_ENABLED:
 
-    def __init__(self, *args, **kwargs):
-        super(MainWindow, self).__init__(*args, **kwargs)
+    import PyQt5
+    from PyQt5 import QtWidgets, QtCore
+    from pyqtgraph import PlotWidget, plot
+    import pyqtgraph as pg
 
-        self.graphWidget = pg.PlotWidget()
-        self.setCentralWidget(self.graphWidget)
+    class MainWindow(QtWidgets.QMainWindow):
 
-        self.y_max = 0
+        def __init__(self, *args, **kwargs):
+            super(MainWindow, self).__init__(*args, **kwargs)
 
-        self.x = [0]
-        self.y = [0]
+            self.graphWidget = pg.PlotWidget()
+            self.setCentralWidget(self.graphWidget)
 
-        self.graphWidget.setTitle("Channel impulse response", size="18pt")
-        self.graphWidget.setBackground('w')
+            self.y_max = 0
 
-        self.graphWidget.showGrid(x=True, y=True)
+            self.x = [0]
+            self.y = [0]
 
-        pen = pg.mkPen(color='k', width=1)
-        self.data_line = self.graphWidget.plot(self.x, self.y, pen=pen)
+            self.graphWidget.setTitle("Channel impulse response", size="18pt")
+            self.graphWidget.setBackground('w')
 
-        # self.timer = QtCore.QTimer()
-        # self.timer.setInterval(10)
-        # self.timer.timeout.connect(self.update_plot_data)
-        # self.timer.start()
+            self.graphWidget.showGrid(x=True, y=True)
+
+            pen = pg.mkPen(color='k', width=1)
+            self.data_line = self.graphWidget.plot(self.x, self.y, pen=pen)
+
+            # self.timer = QtCore.QTimer()
+            # self.timer.setInterval(10)
+            # self.timer.timeout.connect(self.update_plot_data)
+            # self.timer.start()
 
 
-    def update_plot_data(self, cir_mag, cir_offset, cir_count):
+        def update_plot_data(self, cir_mag, cir_offset, cir_count):
 
 
-        # self.y_max = self.y_max * 0.98
-        # self.y_max = max(cir_mag) + max(cir_mag)/4
+            # self.y_max = self.y_max * 0.98
+            # self.y_max = max(cir_mag) + max(cir_mag)/4
 
-        if self.y_max < max(cir_mag):
-            self.y_max = max(cir_mag) + max(cir_mag)/4
+            if self.y_max < max(cir_mag):
+                self.y_max = max(cir_mag) + max(cir_mag)/4
 
-        self.graphWidget.setYRange(0, self.y_max, padding=0)
+            self.graphWidget.setYRange(0, self.y_max, padding=0)
 
-        # self.x = list( range(-fp_idx, len(cir_mag)-fp_idx, 1) )
-        self.x = list( range(cir_offset, cir_offset+cir_count, 1) )
-        self.y = cir_mag
+            # self.x = list( range(-fp_idx, len(cir_mag)-fp_idx, 1) )
+            self.x = list( range(cir_offset, cir_offset+cir_count, 1) )
+            self.y = cir_mag
 
-        self.data_line.setData(self.x, self.y)  # Update the data.
+            self.data_line.setData(self.x, self.y)  # Update the data.
 
 
 ####################################################
@@ -151,23 +152,27 @@ def thread_read_data(arg, update_plot_data):
                 while True:
                     # Read a chunk of data
                     date_time_chunk = file.read(23)
-                    data_chunk = file.read(PACKET_SIZE)
+                    data_chunk = file.read(cir_packet.PACKET_SIZE)
 
                     # Break the loop if no more data is read (i.e., end of file)
                     if not data_chunk:
                         break
 
-                    formatted_date_time = date_time_chunk.decode('utf-8')
-                    data_packet = cir_packet.parse_data_packet(data_chunk)
-                    diag_packet = cir_packet.parse_diag_frame(data_packet["data"])
-                    mhr_data = cir_packet.parse_mhr_data(diag_packet["frame_buffer"][0:24])
-                    device_event_cnt = cir_packet.parse_device_event_cnt(diag_packet["event_cnt"])
-                    rxdiag = cir_packet.parse_dwt_rxdiag(diag_packet["rxdiag"])
-                    cir_cmplx = cir_packet.parse_cir_buffer(diag_packet["cir_buffer"])
-                    cir_mag = [abs(s) for s in cir_cmplx]
+                    try:
+                        formatted_date_time = date_time_chunk.decode('utf-8')
+                        data_packet = cir_packet.parse_data_packet(data_chunk)
+                        diag_packet = cir_packet.parse_diag_frame(data_packet["data"])
+                        mhr_data = cir_packet.parse_mhr_data(diag_packet["frame_buffer"][0:24])
+                        device_event_cnt = cir_packet.parse_device_event_cnt(diag_packet["event_cnt"])
+                        rxdiag = cir_packet.parse_dwt_rxdiag(diag_packet["rxdiag"])
+                        cir_cmplx = cir_packet.parse_cir_buffer(diag_packet["cir_buffer"])
+                        cir_mag = [abs(s) for s in cir_cmplx]
 
-                    cir_cmplx_str = cir_packet.complex_list_to_str(cir_cmplx)
-                    frame_buffer_str = ''.join(f'{byte:02X}' for byte in diag_packet["frame_buffer"])
+                        cir_cmplx_str = cir_packet.complex_list_to_str(cir_cmplx)
+                        frame_buffer_str = ''.join(f'{byte:02X}' for byte in diag_packet["frame_buffer"])
+                    except:
+                        print("Error parsing packet (skipping packet)")
+                        continue
 
                     writer.writerow((
                         formatted_date_time,
